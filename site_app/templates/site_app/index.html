@@ -1,0 +1,13 @@
+{% extends 'site_app/base.html' %} <!--Наследуется благодаря строчке от base и внутрь будет вставлять что пропишем здесь-->>
+
+{% block content %}
+    <h1>Мои фотки</h1>
+
+    {%for photo in photos %}
+
+    <img src="{{photo.photo.url}}">
+
+    {% endfor %}
+
+
+{% endblock %}

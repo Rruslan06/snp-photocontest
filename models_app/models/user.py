@@ -7,3 +7,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
 #Временно переопределили модель пользователей и теперь это основная
     pass
+
+    class Meta:
+        app_label = "models_app"
+        db_table = "User"
