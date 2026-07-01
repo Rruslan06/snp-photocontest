@@ -1,13 +1,11 @@
 {% extends 'site_app/base.html' %} <!--Наследуется благодаря строчке от base и внутрь будет вставлять что пропишем здесь-->>
 
 {% block content %}
-    <h1>Мои фотки</h1>
 
-    {%for photo in photos %}
-
-    <a href="{% url 'site_app:detail_page' photo.pk %}"><img src="{{photo.photo.url}}"> </a>
-
-    {% endfor %}
-
+    <h1>{{photo.name}} </h1>
+    <h2>{{photo.author}} </h2>
+     <img src="{{photo.photo.url}}">
+    <p>Описание:</p>
+     <h3>{{photo.description}}</h3>
 
 {% endblock %}
