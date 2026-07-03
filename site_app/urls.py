@@ -1,7 +1,7 @@
 
 from django.urls import path
 
-from . import views
+from site_app import views
 
 app_name = "site_app" #Пространство имен ссылок, чтобы потом использовать в связке с name и не хардкордить шаблоны
 

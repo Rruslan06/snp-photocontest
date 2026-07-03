@@ -1,11 +1,39 @@
-{% extends 'site_app/base.html' %} <!--Наследуется благодаря строчке от base и внутрь будет вставлять что пропишем здесь-->>
+{% extends 'site_app/base.html' %}
 
 {% block content %}
+<!-- Кнопка "Назад" -->
+<div class="mb-4">
+    <a href="{% url 'site_app:master_page' %}" class="btn btn-outline-secondary btn-sm">&larr; Вернуться в галерею</a>
+</div>
 
-    <h1>{{photo.name}} </h1>
-    <h2>{{photo.author}} </h2>
-     <img src="{{photo.photo.url}}">
-    <p>Описание:</p>
-     <h3>{{photo.description}}</h3>
+<!-- БЛОК С ИНФОРМАЦИЕЙ -->
+<div class="row">
+    <!-- Левая колонка: ФОТО -->
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <img src="{{ photo.photo.url }}" class="card-img-top img-fluid rounded" alt="{{ photo.name }}">
+        </div>
+    </div>
 
+    <!-- Правая колонка: ДАННЫЕ -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">{{ photo.name }}</h3>
+                <hr>
+                <p class="card-text"><strong>Автор:</strong> {{ photo.author.username }}</p>
+                <p class="card-text"><strong>Дата публикации:</strong> {{ photo.date|date:"d.m.Y H:i" }}</p>
+                
+                <h5 class="mt-4">Описание:</h5>
+                <p class="card-text">
+                    {% if photo.description %}
+                        {{ photo.description }}
+                    {% else %}
+                        <span class="text-muted">Автор не оставил описание.</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

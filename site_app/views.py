@@ -20,10 +20,40 @@ class PhotoListView(generic.ListView):
     model = Photo
     template_name = 'site_app/index.html'
     context_object_name = 'photos'
+    paginate_by = 4
 
     #Потом переопределить чтобы отображались только прошедшие модерацию
     def get_queryset(self):
-        return super().get_queryset()
+        queryset = super().get_queryset()
+
+        q = self.request.GET.get('q', '')
+        search_type = self.request.GET.get('search_type', 'name')
+        if q:
+            if search_type == 'name':
+                queryset = queryset.filter(name__icontains=q)
+            elif search_type == 'author':
+                queryset = queryset.filter(author__username__icontains=q)
+            elif search_type == 'description':
+                queryset = queryset.filter(description__icontains=q)
+
+        sort_param = self.request.GET.get('sort', 'date_desc')
+
+        if sort_param == 'date_asc':
+            return queryset.order_by('date')  # Сначала старые
+        else:
+            return queryset.order_by('-date') # Сначала новые
+        
+
+    def get_context_data(self, **kwargs):
+        # Получаем стандартный контекст (в нем уже есть объект из ОсновнойМодели как 'object')
+        context = super().get_context_data(**kwargs)    
+
+        context['sort_param'] = self.request.GET.get('sort', 'date_desc')
+        context['search_query'] = self.request.GET.get('q', '')
+        context['search_type'] = self.request.GET.get('search_type', 'name')
+
+        return context
+
 
 
 
