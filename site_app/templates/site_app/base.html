@@ -1,3 +1,4 @@
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -11,6 +12,27 @@
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{#}">S&P Фотоконкурс</a>
+
+            <div class="d-flex">
+                <!-- Если пользователь авторизован -->
+                {% if request.user.is_authenticated %}
+                <span class="navbar-text me-3">
+                    Привет, {{ request.user.username }}!
+                </span>
+                <!-- Кнопка ВЫХОД -->
+                <form method="post" action="{% url 'account_logout' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-light btn-sm" type="submit">Выйти</button>
+                </form>
+    
+                <!-- Если это гость -->
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-sm me-2">Войти</a>
+                    <a href="{% url 'account_signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    <a href="{% provider_login_url 'yandex' %}" class="btn btn-warning btn-sm me-2">Вход через Яндекс</a>
+                {% endif %}
+            </div>
+        
         </div>
     </nav>
 

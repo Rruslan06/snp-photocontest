@@ -9,6 +9,10 @@ from django.db.models import F #Чтобы работать с полями и �
 from django.http import HttpResponse, HttpResponseRedirect #Чтобы перенаправлять пользователя с POST на GET запросы(страницы)
 
 from models_app.models import Photo, Comment
+
+from django.db.models import Q # Q-объекты для гибких условий фильтрации
+
+from django.contrib.auth.mixins import LoginRequiredMixin #Миксин для проверки что пользователь авторизован
 # Create your views here.
 
 
@@ -27,14 +31,9 @@ class PhotoListView(generic.ListView):
         queryset = super().get_queryset()
 
         q = self.request.GET.get('q', '')
-        search_type = self.request.GET.get('search_type', 'name')
         if q:
-            if search_type == 'name':
-                queryset = queryset.filter(name__icontains=q)
-            elif search_type == 'author':
-                queryset = queryset.filter(author__username__icontains=q)
-            elif search_type == 'description':
-                queryset = queryset.filter(description__icontains=q)
+            search_query = Q(name__icontains=q) | Q(author__username__icontains=q) | Q(description__icontains=q)
+            queryset = queryset.filter(search_query)
 
         sort_param = self.request.GET.get('sort', 'date_desc')
 
@@ -50,7 +49,6 @@ class PhotoListView(generic.ListView):
 
         context['sort_param'] = self.request.GET.get('sort', 'date_desc')
         context['search_query'] = self.request.GET.get('q', '')
-        context['search_type'] = self.request.GET.get('search_type', 'name')
 
         return context
 
@@ -69,3 +67,4 @@ class PhotoDetailView(generic.DetailView):
         context['comments'] = Comment.objects.filter(photo=self.object)
 
         return context
+    
