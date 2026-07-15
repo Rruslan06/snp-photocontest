@@ -23,6 +23,9 @@ urlpatterns = [
     #Доступ к админ-панели
     path('admin/', admin.site.urls),
 
+    # Все URL-адреса библиотеки allauth по пути /accounts/
+    path('accounts/', include('allauth.urls')), 
+
     #http:127.0.0.1:8000/
     path('', include('site_app.urls')),
 

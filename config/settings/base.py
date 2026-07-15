@@ -40,6 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+        #модуль для allauth
+    'django.contrib.sites',
+
+    #Allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    #'allauth.socialaccount.providers.vk',
+    'allauth.socialaccount.providers.yandex',
+
+    #Наши приложения
     'models_app',
     'site_app',
 ]
@@ -52,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -74,7 +87,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-
+# Говорим Джанго использовать и стандартную авторизацию, и авторизацию от allauth
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 
 # Password validation
@@ -120,3 +137,10 @@ AUTH_USER_MODEL = 'models_app.User'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads/')
 
 MEDIA_URL = '/uploads/'
+
+SITE_ID = 1
+
+# Куда перенаправлять юзера после успешного входа и выхода (на главную страницу)
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+

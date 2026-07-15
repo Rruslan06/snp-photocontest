@@ -8,14 +8,6 @@
 <form method="GET" action="{% url 'site_app:master_page' %}" class="mb-4">
     <div class="input-group shadow-sm">
         
-        <!-- Выпадающий список (name="search_type" - это ключ, который мы будем ловить в Питоне) -->
-        <select class="form-select" name="search_type" style="max-width: 200px;">
-            <!-- Значение value="name" улетит в Питон. А слово "По названию" увидит юзер -->
-            <option value="name">В названии</option>
-            <option value="author">В авторе</option>
-            <option value="description">В описании</option>
-        </select>
-
         <!-- Поле ввода (name="q" - это ключ для самого текста поиска) -->
         <input type="text" name="q" class="form-control" placeholder="Введите текст для поиска..." value="{{ request.GET.q }}">
         
@@ -28,8 +20,8 @@
 <!-- БЛОК СОРТИРОВКИ -->
 <div class="mb-4 bg-light p-3 rounded border">
     <strong class="me-2">Сортировка:</strong>
-    <a href="?sort=date_desc" class="btn btn-sm {% if sort_param == 'date_desc' %}btn-primary{% else %}btn-outline-primary{% endif %}">Сначала новые</a>
-    <a href="?sort=date_asc" class="btn btn-sm {% if sort_param == 'date_asc' %}btn-primary{% else %}btn-outline-primary{% endif %}">Сначала старые</a>
+    <a href="?sort=date_desc&q={{ search_query }}" class="btn btn-sm {% if sort_param == 'date_desc' %}btn-primary{% else %}btn-outline-primary{% endif %}">Сначала новые</a>
+    <a href="?sort=date_asc&q={{ search_query }}" class="btn btn-sm {% if sort_param == 'date_asc' %}btn-primary{% else %}btn-outline-primary{% endif %}">Сначала старые</a>
 </div>
 
 <!-- СЕТКА ФОТОГРАФИЙ -->
@@ -38,7 +30,7 @@
     <div class="col">
         <div class="card h-100 shadow-sm">
             <a href="{% url 'site_app:detail_page' photo.pk %}">
-                <!-- Картинки обрезаются под один размер (200px) для ровной сетки -->
+                <!-- Картинки обрезаются под один размер (300px) для ровной сетки -->
                 <img src="{{ photo.photo.url }}" class="card-img-top" alt="{{ photo.name }}" style="height: 300px; object-fit: cover;">
             </a>
             <div class="card-body">
@@ -56,10 +48,10 @@
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page=1&sort={{ sort_param }}&q={{search_query}}&search_type={{search_type}}">&laquo; Первая</a>
+                <a class="page-link" href="?page=1&sort={{ sort_param }}&q={{search_query}}">&laquo; Первая</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort_param }}&q={{search_query}}&search_type={{search_type}}">Назад</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort_param }}&q={{search_query}}">Назад</a>
             </li>
         {% endif %}
 
@@ -69,10 +61,10 @@
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort_param }}&q={{search_query}}&search_type={{search_type}}">Вперед</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort_param }}&q={{search_query}}">Вперед</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_param }}&q={{search_query}}&search_type={{search_type}}">Последняя &raquo;</a>
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_param }}&q={{search_query}}">Последняя &raquo;</a>
             </li>
         {% endif %}
     </ul>
