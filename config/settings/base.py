@@ -41,19 +41,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-        #модуль для allauth
+    #Наши приложения
+    'models_app',
+    'site_app',
+
+    #модуль для allauth
     'django.contrib.sites',
 
     #Allauth
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    #'allauth.socialaccount.providers.vk',
     'allauth.socialaccount.providers.yandex',
-
-    #Наши приложения
-    'models_app',
-    'site_app',
 ]
 
 MIDDLEWARE = [
