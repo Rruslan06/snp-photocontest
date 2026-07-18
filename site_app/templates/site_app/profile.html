@@ -1,0 +1,67 @@
+{% extends 'site_app/base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- ЛЕВАЯ КОЛОНКА: МЕНЮ И ФИЛЬТРЫ -->
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <!-- Аватарка (пока заглушка) -->
+                <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=random" class="rounded-circle mb-3" width="100" alt="Avatar">
+                <h5 class="card-title">{{ request.user.username }}</h5>
+                <p class="text-muted small">{{ request.user.email }}</p>
+                
+                <hr>
+                <!-- Кнопка загрузки (ведет на наш CreateView) -->
+                <a href="{% url 'site_app:photo_upload' %}" class="btn btn-success w-100 mb-3">
+                    + Добавить фото
+                </a>
+
+                <!-- ЗАГЛУШКИ ДЛЯ ФИЛЬТРОВ -->
+                <div class="list-group list-group-flush text-start">
+                    <a href="#" class="list-group-item list-group-item-action active">Все фото</a>
+                    <a href="#" class="list-group-item list-group-item-action">На модерации</a>
+                    <a href="#" class="list-group-item list-group-item-action">Одобренные</a>
+                    <a href="#" class="list-group-item list-group-item-action">Отклоненные</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА: СЕТКА ФОТОГРАФИЙ -->
+    <div class="col-md-9">
+        <h3 class="mb-4">Мои фотографии</h3>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for photo in photos %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <!-- Цветные бейджики статусов -->
+                    <div class="position-absolute top-0 end-0 p-2">
+                        {% if photo.status == 'MOD' %}
+                            <span class="badge bg-warning text-dark">На проверке</span>
+                        {% elif photo.status == 'APR' %}
+                            <span class="badge bg-success">Одобрено</span>
+                        {% elif photo.status == 'REG' %}
+                            <span class="badge bg-danger">Отклонено</span>
+                        {% endif %}
+                    </div>
+
+                    <img src="{{ photo.photo.url }}" class="card-img-top" alt="{{ photo.name }}" style="height: 200px; object-fit: cover;">
+                    
+                    <div class="card-body">
+                        <h6 class="card-title">{{ photo.name }}</h6>
+                        <p class="text-muted small mb-0">{{ photo.date|date:"d.m.Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Если фоток нет -->
+            <div class="col-12">
+                <div class="alert alert-info">У вас пока нет загруженных фотографий.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -28,13 +28,19 @@
 <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
     {% for photo in photos %}
     <div class="col">
-        <div class="card h-100 shadow-sm">
-            <a href="{% url 'site_app:detail_page' photo.pk %}">
+        <div class="card h-100 shadow-sm">                              <!--ДОБАВИЛ КЛАСС ЧТОБЫ ПОТОМ НА НЕГО ССЫЛАТЬСЯ И ЧТОБЫ ЭЛЕМЕНТЫ БЫЛИ  СТРОГО ВНУТРИ(relative)-->
+            <a href="{% url 'site_app:detail_page' photo.pk %}" class="position-relative d-block photo-hover-wrap">
                 <!-- Картинки обрезаются под один размер (300px) для ровной сетки -->
                 <img src="{{ photo.photo.url }}" class="card-img-top" alt="{{ photo.name }}" style="height: 300px; object-fit: cover;">
+
+                <!--ВСПЛЫВАЮЩЕЕ ОКНО ПРИ ХУВЕРЕ-->
+                <div class="photo-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 text-white p-3 d-flex align-items-center justify-content-center text-center" style="opacity: 0; transition: opacity 0.3s;">
+                    <span class="small">{{ photo.description}}</span>
+                </div>
             </a>
             <div class="card-body">
                 <h6 class="card-title">{{ photo.name }}</h6>
+                <p class="card-text text-muted small mb-0">Дата публикации: {{photo.date|date:"d.m.Y"}}</p>
                 <p class="card-text text-muted small mb-0">Автор: {{ photo.author.username }}</p>
             </div>
         </div>
@@ -70,4 +76,13 @@
     </ul>
 </nav>
 {% endif %}
+
+
+
+<style>
+    /* При наведении на обертку, делаем описание видимым */
+    .photo-hover-wrap:hover .photo-overlay {
+        opacity: 1 !important;
+    }
+</style>
 {% endblock %}

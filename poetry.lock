@@ -178,6 +178,18 @@ socialaccount = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)", "requests 
 steam = ["python3-openid (>=3.0.8,<4)"]
 
 [[package]]
+name = "django-fsm"
+version = "3.0.1"
+description = "Django friendly finite state machine support."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "django-fsm-3.0.1.tar.gz", hash = "sha256:d6436f5931e09d76e9a434781548627deab80c74cd6726adce95b31b5ddd4d1e"},
+    {file = "django_fsm-3.0.1-py2.py3-none-any.whl", hash = "sha256:ea07be2da221efa5cb8743cc94e0bb64fd962adff594f82269040eb4708c30c6"},
+]
+
+[[package]]
 name = "django-split-settings"
 version = "1.3.2"
 description = "Organize Django settings into multiple files and directories. Easily override and modify settings. Use wildcards and optional settings files."
@@ -365,4 +377,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "c421dccfeb4eef251567a023b9a1387a3f49f357fcce8a25fc528024dcdd330e"
+content-hash = "d1d173506eaf01c0d65705c1f29e29805116552a4c7f15743cf31e7fc625f605"

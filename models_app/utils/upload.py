@@ -38,4 +38,4 @@ def save_file(sender, instance, created, **kwargs):
 
 
 def file_delete(sender, instance, **kwargs):
-    instance.file.delete(False)
+    instance.photo.delete(False)

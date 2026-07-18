@@ -11,7 +11,7 @@
     <!--ХЭДЕР-->
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{#}">S&P Фотоконкурс</a>
+            <a class="navbar-brand" href="{% url 'site_app:master_page' %}">S&P Фотоконкурс</a>
 
             <div class="d-flex">
                 <!-- Если пользователь авторизован -->
@@ -19,6 +19,7 @@
                 <span class="navbar-text me-3">
                     Привет, {{ request.user.username }}!
                 </span>
+                <a href="{% url 'site_app:profile' %} " class="btn btn-outline-light btn-sm me-2">Мой профиль</a>
                 <!-- Кнопка ВЫХОД -->
                 <form method="post" action="{% url 'account_logout' %}">
                     {% csrf_token %}

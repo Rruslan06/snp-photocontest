@@ -12,4 +12,10 @@ urlpatterns = [
     #http:127.0.0.1:8000/photo/номер PK
     path('photo/<int:pk>/', views.PhotoDetailView.as_view(), name='detail_page'),
 
+    #http:127.0.0.1:8000/profile/
+    path('profile/', views.UserProfileView.as_view(), name='profile'),
+
+    #http:127.0.0.1:8000/upload/
+    path('upload/', views.PhotoCreateView.as_view(), name='photo_upload'),
+
 ]

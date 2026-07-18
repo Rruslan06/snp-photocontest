@@ -13,6 +13,7 @@ from models_app.models import Photo, Comment
 from django.db.models import Q # Q-объекты для гибких условий фильтрации
 
 from django.contrib.auth.mixins import LoginRequiredMixin #Миксин для проверки что пользователь авторизован
+
 # Create your views here.
 
 
@@ -68,3 +69,34 @@ class PhotoDetailView(generic.DetailView):
 
         return context
     
+
+
+class UserProfileView(LoginRequiredMixin, generic.ListView):
+    model = Photo
+    template_name = 'site_app/profile.html'
+    context_object_name = 'photos'
+
+    def get_queryset(self):
+        # Достаем фото только того пользователя, который сейчас залогинен
+        return Photo.objects.filter(author=self.request.user).order_by('-date')
+
+
+
+
+class PhotoCreateView(LoginRequiredMixin, generic.CreateView):
+    model = Photo
+    template_name = 'site_app/upload.html'
+    fields = ['name', 'description', 'photo']
+
+
+    #Куда перенаправлять если форма заполнена корректно
+    def get_success_url(self):
+        return reverse('site_app:profile') 
+
+    #
+    def form_valid(self, form):
+
+        #Чтобы автор сразу пробрасывался
+        form.instance.author = self.request.user
+        
+        return super().form_valid(form)
