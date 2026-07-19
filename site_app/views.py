@@ -17,9 +17,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin #Миксин для �
 # Create your views here.
 
 
-# def index(request):
-#     photos = Photo.objects.all()
-#     return render(request, "site_app/index.html", {"photos": photos})
+
 
 class PhotoListView(generic.ListView):
     model = Photo
@@ -78,9 +76,23 @@ class UserProfileView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         # Достаем фото только того пользователя, который сейчас залогинен
-        return Photo.objects.filter(author=self.request.user).order_by('-date')
+        queryset = Photo.objects.filter(author=self.request.user).order_by('-date')
+        status_param = self.request.GET.get('status')
 
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        
+        return queryset
+    
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context["status"] = self.request.GET.get('status')
+
+        return context
+
+        
 
 
 class PhotoCreateView(LoginRequiredMixin, generic.CreateView):

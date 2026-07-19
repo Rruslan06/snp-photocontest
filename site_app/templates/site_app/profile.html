@@ -17,13 +17,18 @@
                     + Добавить фото
                 </a>
 
-                <!-- ЗАГЛУШКИ ДЛЯ ФИЛЬТРОВ -->
-                <div class="list-group list-group-flush text-start">
-                    <a href="#" class="list-group-item list-group-item-action active">Все фото</a>
-                    <a href="#" class="list-group-item list-group-item-action">На модерации</a>
-                    <a href="#" class="list-group-item list-group-item-action">Одобренные</a>
-                    <a href="#" class="list-group-item list-group-item-action">Отклоненные</a>
-                </div>
+                <!-- РАБОЧИЕ ФИЛЬТРЫ -->
+                    <div class="list-group list-group-flush text-start">
+                        <!-- Если status пустой (None), значит выбраны "Все фото" -->
+                        <a href="?" class="list-group-item list-group-item-action {% if not status %}active{% endif %}">Все фото</a>
+    
+                        <!-- Передаем ?status=MOD и проверяем, равен ли текущий статус 'MOD' -->
+                        <a href="?status=MOD" class="list-group-item list-group-item-action {% if status == 'MOD' %}active{% endif %}">На модерации</a>
+    
+                        <a href="?status=APR" class="list-group-item list-group-item-action {% if status == 'APR' %}active{% endif %}">Одобренные</a>
+    
+                        <a href="?status=REG" class="list-group-item list-group-item-action {% if status == 'REG' %}active{% endif %}">Отклоненные</a>
+                    </div>
             </div>
         </div>
     </div>
