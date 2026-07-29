@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404 #Нужен чтобы использовать шаблоны(короткий путь) и ошибку 404
+from django.shortcuts import render, get_object_or_404, redirect #Нужен чтобы использовать шаблоны(короткий путь) и ошибку 404
 
 from django.urls import reverse #Как в шаблонах в Питоне используем удобную запись и не хардкордим страницу куда перейти
 
@@ -14,6 +14,7 @@ from django.db.models import Q # Q-объекты для гибких услов
 
 from django.contrib.auth.mixins import LoginRequiredMixin #Миксин для проверки что пользователь авторизован
 
+from django.contrib.auth.decorators import login_required #Декоратор чтобы функиця проверяла что пользователь авторизован
 # Create your views here.
 
 
@@ -63,10 +64,44 @@ class PhotoDetailView(generic.DetailView):
         # Получаем стандартный контекст (в нем уже есть объект из ОсновнойМодели как 'object')
         context = super().get_context_data(**kwargs)
     
-        context['comments'] = Comment.objects.filter(photo=self.object)
+        context['comments'] = Comment.objects.filter(photo=self.object).filter(parent=None).order_by('-date')
 
         return context
     
+
+
+@login_required
+def add_comment(request, pk):
+    if request.method == "POST":
+        photo = get_object_or_404(Photo, pk=pk)
+        
+        text = request.POST.get('text')
+        
+        parent_id =  request.POST.get('parent_id')
+
+        if text:
+            if parent_id:
+                father = get_object_or_404(Comment, id=parent_id)
+                if father.parent_id:
+                    final_parent = father.parent
+                else:
+                    final_parent = father
+                Comment.objects.create(text=text, author=request.user, photo=photo, parent=final_parent)
+
+            else:    
+                Comment.objects.create(text=text, author=request.user, photo=photo)
+    return redirect("site_app:detail_page", pk=pk)
+
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if request.method == "POST":
+        if request.user == comment.author:
+            if not comment.replies.exists():
+                comment.delete()
+    return redirect("site_app:detail_page", pk=comment.photo.pk)
+
 
 
 class UserProfileView(LoginRequiredMixin, generic.ListView):

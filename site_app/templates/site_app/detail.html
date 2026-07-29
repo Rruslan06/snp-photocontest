@@ -34,6 +34,77 @@
                 </p>
             </div>
         </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <h2>Комментарии:</h2>
+
+                {% if request.user.is_authenticated %}
+
+                <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}">
+                    {% csrf_token %}
+
+                    <textarea name="text" placeholder="Напишите комментарий..."></textarea>
+
+
+                    <button type="submit">Отправить</button>
+                </form>
+                {%else%}
+                {%endif%}
+
+
+                {% for comment in comments %}
+    <!-- 1. ГЛАВНЫЙ КОММЕНТАРИЙ -->
+    <div class="card shadow-sm mb-2">
+        <div class="card-body">
+            <p class="card-text"><strong>Автор:</strong> {{ comment.author.username }} </p>
+            <p class="card-text">{{ comment.text }}</p>
+
+            <!-- Кнопка удаления ГЛАВНОГО коммента (проверяем comment) -->
+            {% if request.user == comment.author and not comment.replies.all %}
+            <form method="POST" action="{% url 'site_app:delete_comment' comment.pk %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 0 5px; font-size: 12px;">Удалить</button>
+            </form>
+            {% endif %}
+        </div>    
+    </div>
+
+    <!-- 2. БЛОК ОТВЕТОВ -->
+    <div style="margin-left: 40px; border-left: 2px solid #ccc; padding-left: 10px; margin-bottom: 20px;">
+        
+        <!-- Цикл по ответам -->
+        {% for reply in comment.replies.all %}
+            <div class="mb-2">
+                <p class="mb-0"><strong>{{ reply.author.username }}</strong>: {{ reply.text }}</p>
+                
+                
+                <!-- Ответам не нужно проверять replies.all, так как у них не бывает внуков -->
+                {% if request.user == reply.author %}
+                <form method="POST" action="{% url 'site_app:delete_comment' reply.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 0 5px; font-size: 10px;">Удалить</button>
+                </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <!-- 3. ФОРМА ДЛЯ НОВОГО ОТВЕТА -->
+        {% if request.user.is_authenticated %}
+        <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}" style="margin-top: 10px;">
+            {% csrf_token %}
+            <!-- Передаем ID главного коммента, чтобы бэкенд понял, к чему привязывать ответ -->
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <textarea name="text" rows="1" placeholder="Ответить..."></textarea>
+            <button type="submit" class="btn btn-sm btn-secondary">Ответить</button>
+        </form>
+        {% endif %}
+
+    </div>
+{% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

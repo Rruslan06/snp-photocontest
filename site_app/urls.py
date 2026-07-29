@@ -18,4 +18,10 @@ urlpatterns = [
     #http:127.0.0.1:8000/upload/
     path('upload/', views.PhotoCreateView.as_view(), name='photo_upload'),
 
+    #http:127.0.0.1:8000/photo/номер PK/comment
+    path('/<int:pk>/comment/', views.add_comment, name="add_comment"),
+
+    #http:127.0.0.1:8000/photo/номер PK/comment
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+
 ]
