@@ -24,6 +24,19 @@
                 <p class="card-text"><strong>Автор:</strong> {{ photo.author.username }}</p>
                 <p class="card-text"><strong>Дата публикации:</strong> {{ photo.date|date:"d.m.Y H:i" }}</p>
                 
+                
+                <form method="POST" action="{% url 'site_app:toggle_vote' photo.pk %}">
+                    {% csrf_token %}
+                    {% if has_voted %}
+                        <!-- Если уже лайкнул - красная кнопка "Убрать лайк" -->
+                        <button type="submit" class="btn btn-danger btn-sm">❤️ Убрать голос ({{ photo.votes.count }})</button>
+                    {% else %}
+                        <!-- Если не лайкнул - прозрачная кнопка "Голосовать" -->
+                        <button type="submit" class="btn btn-outline-danger btn-sm">🤍 Голосовать ({{ photo.votes.count }})</button>
+                    {% endif %}
+                    </form>
+
+
                 <h5 class="mt-4">Описание:</h5>
                 <p class="card-text">
                     {% if photo.description %}

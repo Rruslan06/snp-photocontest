@@ -24,4 +24,7 @@ urlpatterns = [
     #http:127.0.0.1:8000/photo/номер PK/comment
     path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 
+    #http:127.0.0.1:8000/photo/номер PK/vote
+    path('photo/<int:pk>/vote/', views.toggle_vote, name="toggle_vote")
+
 ]
