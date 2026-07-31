@@ -25,6 +25,8 @@ class Photo(models.Model):
 
     status = FSMField(max_length=20, choices=Photo_Status.choices, default=Photo_Status.ON_MODERATION, verbose_name="Статус модерации")
 
+    pending_photo = models.ImageField(upload_to=uploaded_file_path, verbose_name="Новая версия (на модерации)", blank=True, null=True)
+
     def __str__(self):
         return f"Название:{self.name}; Автор:{self.author.username}"
     
@@ -35,7 +37,10 @@ class Photo(models.Model):
     @transition(field=status, source=Photo_Status.ON_MODERATION, target=Photo_Status.APPROVED)
     def approve(self):
         # Здесь можно написать отправление пуш-уведомления на будущее
-        pass
+        if self.pending_photo:
+            self.photo = self.pending_photo
+            self.pending_photo = None
+
 
     # Правило: Отклонить можно ТОЛЬКО из статуса ON_MODERATION
     @transition(field=status, source=Photo_Status.ON_MODERATION, target=Photo_Status.REJECTED)

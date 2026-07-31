@@ -158,10 +158,37 @@ class PhotoCreateView(LoginRequiredMixin, generic.CreateView):
     def get_success_url(self):
         return reverse('site_app:profile') 
 
-    #
+    
     def form_valid(self, form):
 
         #Чтобы автор сразу пробрасывался
         form.instance.author = self.request.user
         
+        return super().form_valid(form)
+    
+
+
+class PhotoUpdateView(LoginRequiredMixin, generic.UpdateView):
+    model = Photo
+    template_name = 'site_app/edit_photo.html'
+    fields = ['name', 'description', 'photo']
+
+    def get_success_url(self):
+        return reverse("site_app:profile")
+    
+
+    #Чтобы фотки мог изменять только их владелец
+    def get_queryset(self):
+        return Photo.objects.filter(author = self.request.user)
+
+    def form_valid(self, form):
+
+        if 'photo' in form.changed_data:
+            old_photo = Photo.objects.get(pk=self.object.pk)
+            form.instance.pending_photo = form.cleaned_data['photo']
+            
+            #Кладем в поле photo из всего объекта old_photo(где лежат и имя, описание, короче весь экземпляр модели) только колонку photo(только сам файл) 
+            form.instance.photo = old_photo.photo
+            form.instance.status = 'MOD'
+
         return super().form_valid(form)
