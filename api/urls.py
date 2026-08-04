@@ -12,4 +12,6 @@ urlpatterns = [
     path('photos/<int:pk>', views.PhotoDetailAPIView.as_view(), name='photo_detail_api'),
 
 
+    path('photos/<int:photo_id>/comments/', views.CommentApiView.as_view(), name='api_photo_comments'),
+
 ]
