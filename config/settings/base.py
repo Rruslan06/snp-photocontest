@@ -41,9 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    #DRF
+    'rest_framework',
+    'drf_spectacular',
+
     #Наши приложения
     'models_app',
     'site_app',
+    'api',
 
     #модуль для allauth
     'django.contrib.sites',
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.yandex',
+    
 ]
 
 MIDDLEWARE = [
@@ -143,3 +149,19 @@ SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', 
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'S&P Photo Contest API',
+    'DESCRIPTION': 'API для фотоконкурса (Стажировка)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
