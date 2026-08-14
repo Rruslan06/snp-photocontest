@@ -19,13 +19,13 @@ urlpatterns = [
     path('upload/', views.PhotoCreateView.as_view(), name='photo_upload'),
 
     #http:127.0.0.1:8000/photo/номер PK/comment
-    path('/<int:pk>/comment/', views.add_comment, name="add_comment"),
+    path('/<int:pk>/comment/', views.AddCommentView.as_view(), name="add_comment"),
 
     #http:127.0.0.1:8000/photo/номер PK/comment
-    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+    path('comment/<int:pk>/delete/', views.DeleteCommentView.as_view(), name='delete_comment'),
 
     #http:127.0.0.1:8000/photo/номер PK/vote
-    path('photo/<int:pk>/vote/', views.toggle_vote, name="toggle_vote"),
+    path('photo/<int:pk>/vote/', views.ToggleVoteView.as_view(), name="toggle_vote"),
 
 
     path('photo/<int:pk>/edit', views.PhotoUpdateView.as_view(), name="edit_photo"),

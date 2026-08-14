@@ -19,7 +19,6 @@ from django.contrib.auth.decorators import login_required #Декоратор ч
 
 
 
-
 class PhotoListView(generic.ListView):
     model = Photo
     template_name = 'site_app/index.html'
@@ -28,7 +27,7 @@ class PhotoListView(generic.ListView):
 
     #Потом переопределить чтобы отображались только прошедшие модерацию
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(status="APR")
 
         q = self.request.GET.get('q', '')
         if q:
@@ -52,9 +51,6 @@ class PhotoListView(generic.ListView):
 
         return context
 
-
-
-
 class PhotoDetailView(generic.DetailView):
     model = Photo #оснновная модель 
     template_name = 'site_app/detail.html'
@@ -73,79 +69,6 @@ class PhotoDetailView(generic.DetailView):
         context['comments'] = Comment.objects.filter(photo=self.object).filter(parent=None).order_by('-date')
 
         return context
-    
-
-
-@login_required
-def add_comment(request, pk):
-    if request.method == "POST":
-        photo = get_object_or_404(Photo, pk=pk)
-        
-        text = request.POST.get('text')
-        
-        parent_id =  request.POST.get('parent_id')
-
-        if text:
-            if parent_id:
-                father = get_object_or_404(Comment, id=parent_id)
-                if father.parent_id:
-                    final_parent = father.parent
-                else:
-                    final_parent = father
-                Comment.objects.create(text=text, author=request.user, photo=photo, parent=final_parent)
-
-            else:    
-                Comment.objects.create(text=text, author=request.user, photo=photo)
-    return redirect("site_app:detail_page", pk=pk)
-
-
-@login_required
-def delete_comment(request, comment_id):
-    comment = get_object_or_404(Comment, pk=comment_id)
-    if request.method == "POST":
-        if request.user == comment.author:
-            if not comment.replies.exists():
-                comment.delete()
-    return redirect("site_app:detail_page", pk=comment.photo.pk)
-
-
-@login_required
-def toggle_vote(request, pk):
-    if request.method == "POST":
-        photo = get_object_or_404(Photo, pk=pk)
-        vote = Vote.objects.filter(photo=photo, author=request.user).first()
-        if vote:
-            vote.delete()
-        else:
-            Vote.objects.create(photo=photo, author=request.user)
-    return redirect("site_app:detail_page", pk=pk)
-
-
-
-class UserProfileView(LoginRequiredMixin, generic.ListView):
-    model = Photo
-    template_name = 'site_app/profile.html'
-    context_object_name = 'photos'
-
-    def get_queryset(self):
-        # Достаем фото только того пользователя, который сейчас залогинен
-        queryset = Photo.objects.filter(author=self.request.user).order_by('-date')
-        status_param = self.request.GET.get('status')
-
-        if status_param:
-            queryset = queryset.filter(status=status_param)
-        
-        return queryset
-    
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["status"] = self.request.GET.get('status')
-
-        return context
-
-        
 
 
 class PhotoCreateView(LoginRequiredMixin, generic.CreateView):
@@ -165,8 +88,7 @@ class PhotoCreateView(LoginRequiredMixin, generic.CreateView):
         form.instance.author = self.request.user
         
         return super().form_valid(form)
-    
-
+   
 
 class PhotoUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = Photo
@@ -185,10 +107,11 @@ class PhotoUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         if 'photo' in form.changed_data:
             old_photo = Photo.objects.get(pk=self.object.pk)
-            form.instance.pending_photo = form.cleaned_data['photo']
+            form.instance.photo = form.cleaned_data['photo']
             
             #Кладем в поле photo из всего объекта old_photo(где лежат и имя, описание, короче весь экземпляр модели) только колонку photo(только сам файл) 
-            form.instance.photo = old_photo.photo
-            form.instance.status = 'MOD'
+            form.instance.archive_photo = old_photo.photo
+        form.instance.status = 'MOD'
 
         return super().form_valid(form)
+    

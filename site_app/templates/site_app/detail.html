@@ -67,57 +67,95 @@
                 {%endif%}
 
 
-                {% for comment in comments %}
-    <!-- 1. ГЛАВНЫЙ КОММЕНТАРИЙ -->
+{% for comment in comments %}
+    <!-- УРОВЕНЬ 1: ГЛАВНЫЙ КОММЕНТАРИЙ -->
     <div class="card shadow-sm mb-2">
-        <div class="card-body">
-            <p class="card-text"><strong>Автор:</strong> {{ comment.author.username }} </p>
-            <p class="card-text">{{ comment.text }}</p>
-
-            <!-- Кнопка удаления ГЛАВНОГО коммента (проверяем comment) -->
-            {% if request.user == comment.author and not comment.replies.all %}
-            <form method="POST" action="{% url 'site_app:delete_comment' comment.pk %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 0 5px; font-size: 12px;">Удалить</button>
-            </form>
-            {% endif %}
-        </div>    
-    </div>
-
-    <!-- 2. БЛОК ОТВЕТОВ -->
-    <div style="margin-left: 40px; border-left: 2px solid #ccc; padding-left: 10px; margin-bottom: 20px;">
-        
-        <!-- Цикл по ответам -->
-        {% for reply in comment.replies.all %}
-            <div class="mb-2">
-                <p class="mb-0"><strong>{{ reply.author.username }}</strong>: {{ reply.text }}</p>
-                
-                
-                <!-- Ответам не нужно проверять replies.all, так как у них не бывает внуков -->
-                {% if request.user == reply.author %}
-                <form method="POST" action="{% url 'site_app:delete_comment' reply.pk %}" style="display: inline;">
+        <div class="card-body py-2">
+            <p class="mb-1"><strong>{{ comment.author.username }}</strong>: {{ comment.text }}</p>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Форма ответа на Уровень 1 -->
+                {% if request.user.is_authenticated %}
+                <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}" class="d-flex align-items-center gap-2">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 0 5px; font-size: 10px;">Удалить</button>
+                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                    <input type="text" name="text" class="form-control form-control-sm" placeholder="Ответить..." style="width: 200px;" required>
+                    <button type="submit" class="btn btn-sm btn-secondary">Ответить</button>
+                </form>
+                {% endif %}
+
+                <!-- Кнопка удаления Уровня 1 -->
+                {% if request.user == comment.author and not comment.replies.all %}
+                <form method="POST" action="{% url 'site_app:delete_comment' comment.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">Удалить</button>
                 </form>
                 {% endif %}
             </div>
-        {% endfor %}
-
-        <!-- 3. ФОРМА ДЛЯ НОВОГО ОТВЕТА -->
-        {% if request.user.is_authenticated %}
-        <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}" style="margin-top: 10px;">
-            {% csrf_token %}
-            <!-- Передаем ID главного коммента, чтобы бэкенд понял, к чему привязывать ответ -->
-            <input type="hidden" name="parent_id" value="{{ comment.id }}">
-            <textarea name="text" rows="1" placeholder="Ответить..."></textarea>
-            <button type="submit" class="btn btn-sm btn-secondary">Ответить</button>
-        </form>
-        {% endif %}
-
+        </div>    
     </div>
-{% endfor %}
+
+    <!-- КОНТЕЙНЕР ДЛЯ ОТВЕТОВ -->
+    <div style="margin-left: 40px; border-left: 2px solid #ccc; padding-left: 15px; margin-bottom: 20px;">
+        
+        <!-- УРОВЕНЬ 2: СЫНОВЬЯ -->
+        {% for reply in comment.replies.all %}
+            <div class="mb-2">
+                <p class="mb-1"><strong>{{ reply.author.username }}</strong>: {{ reply.text }}</p>
+                
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <!-- Форма ответа на Уровень 2 -->
+                    {% if request.user.is_authenticated %}
+                    <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}" class="d-flex align-items-center gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="parent_id" value="{{ reply.id }}">
+                        <input type="text" name="text" class="form-control form-control-sm" placeholder="Ответить..." style="width: 150px;" required>
+                        <button type="submit" class="btn btn-sm btn-light border">Ответить</button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Кнопка удаления Уровня 2 -->
+                    {% if request.user == reply.author and not reply.replies.all %}
+                    <form method="POST" action="{% url 'site_app:delete_comment' reply.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0">Удалить</button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <!-- УРОВЕНЬ 3: ВНУКИ -->
+                <div style="margin-left: 40px; border-left: 2px solid #eee; padding-left: 10px;">
+                    {% for grandchild in reply.replies.all %}
+                        <div class="mb-1">
+                            <p class="mb-1 text-muted"><strong>{{ grandchild.author.username }}</strong>: {{ grandchild.text }}</p>
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Форма ответа на Уровень 3 (Бэкенд сам привяжет его к Уровню 2!) -->
+                                {% if request.user.is_authenticated %}
+                                <form method="POST" action="{% url 'site_app:add_comment' photo.pk %}" class="d-flex align-items-center gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="parent_id" value="{{ grandchild.id }}">
+                                    <input type="text" name="text" class="form-control form-control-sm" placeholder="Ответить..." style="width: 120px;" required>
+                                    <button type="submit" class="btn btn-sm btn-light border">Ответить</button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Кнопка удаления Уровня 3 -->
+                                {% if request.user == grandchild.author %}
+                                <form method="POST" action="{% url 'site_app:delete_comment' grandchild.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">Удалить</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
+        {% endfor %}
     </div>
-</div>
+{% empty %}
+    <p class="text-muted">Комментариев пока нет. Будьте первым!</p>
+{% endfor %}
+
 {% endblock %}

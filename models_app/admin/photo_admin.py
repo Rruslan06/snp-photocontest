@@ -55,20 +55,20 @@ class PhotoAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 50px; border-radius: 5px;" />', obj.photo.url)
         return "Нет фото"
     
-    image_preview.short_description = 'Превью'
+    image_preview.short_description = 'Основная(Новая) фотография'
 
 
-    def pending_image_preview(self, obj):
-        if obj.pending_photo:
-            return format_html('<img src="{}" style="max-height: 50px; border-radius: 5px;" />', obj.pending_photo.url)
+    def archive_image_preview(self, obj):
+        if obj.archive_photo:
+            return format_html('<img src="{}" style="max-height: 50px; border-radius: 5px;" />', obj.archive_photo.url)
         return "Нет фото"
 
-    pending_image_preview.short_description = "Новая фотография"
+    archive_image_preview.short_description = "Старая фотография"
 
-    list_display = ('image_preview', 'pending_image_preview','name', 'author', 'status', 'date')
+    list_display = ('image_preview', 'archive_image_preview','name', 'author', 'status', 'date')
     list_filter = ('status', 'date')
     search_fields = ('name', 'description', 'author__username')
-    readonly_fields = ('date','pending_photo')
+    readonly_fields = ('date','archive_photo')
     
     # Регистрируем наши кнопки в админке!
     actions = [approve_photos, reject_photos]
