@@ -5,6 +5,10 @@ from models_app.models.photo import Photo
 
 from django.utils.html import format_html
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from models_app.models import User
+
 @admin.action(description='Одобрить выбранные фотографии')
 def approve_photos(modeladmin, request, queryset):
     success_count = 0
@@ -14,6 +18,14 @@ def approve_photos(modeladmin, request, queryset):
         try:
             photo.approve() 
             photo.save()
+
+            # УВЕДОМЛЕНИЕ
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{photo.author.id}",
+                {"type": "send_notification", "message": f"Ваша фотография '{photo.name}' была ОДОБРЕНА модератором!"}
+            )
+
             success_count += 1
         except TransitionNotAllowed:
             
@@ -26,6 +38,8 @@ def approve_photos(modeladmin, request, queryset):
         modeladmin.message_user(request, f'Ошибка: {error_count} фото уже имеют другой статус!', messages.ERROR)
 
 
+
+
 @admin.action(description='Отклонить выбранные фотографии')
 def reject_photos(modeladmin, request, queryset):
     success_count = 0
@@ -35,6 +49,14 @@ def reject_photos(modeladmin, request, queryset):
         try:
             photo.reject()
             photo.save()
+
+            # УВЕДОМЛЕНИЕ
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{photo.author.id}",
+                {"type": "send_notification", "message": f"Ваша фотография '{photo.name}' была ОТКЛОНЕНА модератором!"}
+            )
+
             success_count += 1
         except TransitionNotAllowed:
             error_count += 1
@@ -43,6 +65,40 @@ def reject_photos(modeladmin, request, queryset):
         modeladmin.message_user(request, f'Успешно отклонено: {success_count} фото.', messages.SUCCESS)
     if error_count > 0:
         modeladmin.message_user(request, f'Ошибка: {error_count} фото нельзя отклонить!', messages.ERROR)
+
+
+
+@admin.action(description='Восстановить удаленные фотографии')
+def restore_photos(modeladmin, request, queryset):
+    success_count = 0
+    error_count = 0
+    for photo in queryset:
+        try:
+            photo.restore() 
+            photo.save()
+            success_count += 1
+        except TransitionNotAllowed:
+            error_count += 1
+    if success_count > 0:
+        modeladmin.message_user(request, f'Успешно восстановлено: {success_count} фото.', messages.SUCCESS)
+    if error_count > 0:
+        modeladmin.message_user(request, f'Ошибка: {error_count} фото нельзя восстановить из текущего статуса!', messages.ERROR)
+
+
+
+@admin.action(description='ОТПРАВИТЬ МАССОВОЕ УВЕДОМЛЕНИЕ ВСЕМ')
+def send_mass_notification(modeladmin, request, queryset):
+    """Рассылает системное уведомление через WebSocket всем пользователям"""
+    channel_layer = get_channel_layer()
+    users = User.objects.all() 
+    
+    for user in users:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user.id}", 
+            {"type": "send_notification", "message": "СИСТЕМНОЕ СООБЩЕНИЕ: Модератор только что проверил новые фотографии!"}
+        )
+    
+    modeladmin.message_user(request, 'Массовое уведомление отправлено всем пользователям!', messages.SUCCESS)
 
 
 
@@ -71,4 +127,4 @@ class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ('date','archive_photo')
     
     # Регистрируем наши кнопки в админке!
-    actions = [approve_photos, reject_photos]
+    actions = [approve_photos, reject_photos, restore_photos, send_mass_notification]

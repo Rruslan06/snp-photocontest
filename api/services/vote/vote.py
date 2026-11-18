@@ -1,6 +1,6 @@
 from django import forms
 from service_objects.services import ServiceWithResult
-from models_app.models import Photo, Vote
+from models_app.models import Photo, Vote, User
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -11,11 +11,18 @@ from service_objects.fields import ModelField
 from functools import lru_cache
 
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 class ToggleVoteService(ServiceWithResult):
     
     photo_id = forms.IntegerField()
     # user_id = forms.IntegerField() 
-    user  = ModelField()
+    user  = ModelField(User)
 
     custom_validations = ["_validate_photo_exist"]
     
@@ -29,13 +36,29 @@ class ToggleVoteService(ServiceWithResult):
 
     def _vote(self):
 
-        vote = Vote.objects.filter(photo=self._photo, author_id=self._user).first()
+        vote = Vote.objects.filter(photo=self._photo, author=self._user).first()
         
         if vote:
             vote.delete()
+            liked = False
         else:
-            Vote.objects.create(photo=self._photo, author_id=self._user)
+            Vote.objects.create(photo=self._photo, author=self._user)
+            liked = True
 
+        self.result = {"liked": liked, "likes_count": self._photo.votes.count()}
+
+
+        # Уведомление автору фото (если лайкает не он сам)
+        if self._user.id != self._photo.author.id:
+            action = "лайкнул" if liked else "снял лайк с"
+            message = f"Пользователь {self._user.username} {action} вашего фото '{self._photo.name}'. Текущее количество голосов: {self._photo.votes.count()}"
+            
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{self._photo.author.id}",
+                {"type": "send_notification", "message": message}
+            )
+        
     
     @property
     @lru_cache
@@ -58,3 +81,6 @@ class ToggleVoteService(ServiceWithResult):
                 ),
             )
             self.response_status = status.HTTP_404_NOT_FOUND
+
+
+

@@ -1,0 +1,82 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <a href="/profile/" class="btn btn-outline-secondary btn-sm">&larr; Вернуться в профиль</a>
+        </div>
+
+        <div class="card shadow-sm border-success">
+            <div class="card-body">
+                <h3 class="card-title text-center text-success mb-4">Новая фотография</h3>
+                
+                <form id="upload-photo-form">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" id="upload-name" class="form-control" placeholder="Придумайте название" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea id="upload-desc" class="form-control" rows="3" placeholder="Пара слов о фотографии" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Файл фотографии</label>
+                        <!-- Принимаем картинки и HEIC с айфонов -->
+                        <input type="file" id="upload-file" class="form-control" accept="image/*,.heic,.heif" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Загрузить на конкурс</button>
+                    <div id="error-msg" class="text-danger mt-2 text-center" style="display:none;">Ошибка при загрузке. Проверьте файл.</div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Защита страницы: пускаем только авторизованных
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login/';
+        }
+    });
+
+    // Обработка отправки формы
+    document.getElementById('upload-photo-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Останавливаем перезагрузку страницы
+        const token = localStorage.getItem('access_token');
+        
+        // Собираем данные формы и файл
+        const formData = new FormData();
+        formData.append('name', document.getElementById('upload-name').value);
+        formData.append('description', document.getElementById('upload-desc').value);
+        formData.append('photo', document.getElementById('upload-file').files[0]);
+
+        // Отправляем в наше API создания фото
+        fetch('/api/photos/create/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}` 
+
+            },
+            body: formData
+        })
+        .then(res => {
+            if (res.ok) {
+
+                window.location.href = '/profile/';
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            document.getElementById('error-msg').style.display = 'block';
+        });
+    });
+</script>
+{% endblock %}

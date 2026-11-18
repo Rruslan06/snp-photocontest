@@ -1,0 +1,310 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/" class="btn btn-outline-secondary btn-sm">&larr; Вернуться в галерею</a>
+</div>
+
+<!-- БЛОК ДЛЯ ФОТОГРАФИИ -->
+<div class="row" id="photo-detail-container">
+    <div class="col-12 text-center text-muted" id="loading-msg">Загрузка фотографии...</div>
+</div>
+
+<!-- БЛОК КОММЕНТАРИЕВ -->
+<div class="row mt-5">
+    <div class="col-md-8">
+        <h4>Комментарии</h4>
+        <hr>
+        
+        <!-- Форма отправки (Скрыта для гостей) -->
+        <div id="comment-form-container" style="display: none;" class="mb-4">
+            <form id="comment-form">
+                <div class="input-group">
+                    <textarea id="comment-text" class="form-control" placeholder="Напишите комментарий..." required></textarea>
+                    <button class="btn btn-primary" type="submit">Отправить</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Список комментариев -->
+        <div id="comments-list">
+            <p class="text-muted">Загрузка комментариев...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const photoId = "{{ photo_id }}"; 
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSinglePhoto();
+        loadComments(); 
+        
+        if (localStorage.getItem('access_token')) {
+            document.getElementById('comment-form-container').style.display = 'block';
+        }
+    });
+
+    // --- 1. ЗАГРУЗКА ФОТОГРАФИИ И КНОПКИ ЛАЙКА ---
+    function loadSinglePhoto() {
+        const token = localStorage.getItem('access_token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        fetch(`/api/photos/${photoId}/`, { headers: headers })
+            .then(res => {
+                if (res.status === 401 && token) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('username');
+                    window.location.reload();
+                    return;
+                }
+                if (!res.ok) throw new Error('HTTP статус: ' + res.status); 
+                return res.json(); 
+            })
+            .then(photo => {
+                if (!photo) return;
+                const container = document.getElementById('photo-detail-container');
+
+                const voteBtnClass = photo.has_voted ? 'btn-danger' : 'btn-outline-danger';
+                const voteBtnText = photo.has_voted 
+                    ? `❤️ Убрать голос (${photo.likes_count})` 
+                    : `🤍 Голосовать (${photo.likes_count})`;
+
+                container.innerHTML = `
+                    <div class="col-md-8 mb-4">
+                        <div class="card shadow-sm">
+                            <img src="${photo.photo}" class="card-img-top img-fluid rounded">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h3 class="card-title">${photo.name}</h3>
+                                <hr>
+                                <p class="card-text"><strong>Автор:</strong> ${photo.author_name}</p>
+                                <p class="card-text"><strong>Дата публикации:</strong> ${new Date(photo.date).toLocaleDateString('ru-RU')}</p>
+                                
+                                <!-- КНОПКА ЛАЙКА -->
+                                <button id="vote-btn" class="btn ${voteBtnClass} btn-sm mb-3" onclick="toggleDetailVote(${photo.id})">
+                                    ${voteBtnText}
+                                </button>
+
+                                <h5 class="mt-2">Описание:</h5>
+                                <p class="card-text">${photo.description ? photo.description : '<span class="text-muted">Нет описания.</span>'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('Детали ошибки:', error);
+                document.getElementById('photo-detail-container').innerHTML = `<h3 class="text-danger">Ошибка: ${error.message}</h3>`;
+            });
+    }
+
+    // --- ФУНКЦИЯ ГОЛОСОВАНИЯ (ЛАЙКА) ---
+    function toggleDetailVote(id) {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert("Пожалуйста, войдите в аккаунт, чтобы голосовать!");
+            window.location.href = '/login/';
+            return;
+        }
+
+        fetch(`/api/photos/${id}/vote/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (res.status === 401) {
+                alert("Сессия истекла, войдите заново.");
+                window.location.href = '/login/';
+                return;
+            }
+            if (!res.ok) throw new Error('Ошибка голосования');
+            return res.json();
+        })
+        .then(data => {
+            if (!data) return;
+            const voteBtn = document.getElementById('vote-btn');
+            if (data.liked) {
+                voteBtn.className = 'btn btn-danger btn-sm mb-3';
+                voteBtn.innerHTML = `❤️ Убрать голос (${data.likes_count})`;
+            } else {
+                voteBtn.className = 'btn btn-outline-danger btn-sm mb-3';
+                voteBtn.innerHTML = `🤍 Голосовать (${data.likes_count})`;
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    // --- 2. ЗАГРУЗКА КОММЕНТАРИЕВ ---
+    function loadComments() {
+        fetch(`/api/photos/${photoId}/comments/`)
+            .then(res => res.json())
+            .then(data => {
+                const comments = data.results || data; 
+                const list = document.getElementById('comments-list');
+                list.innerHTML = '';
+
+                if (comments.length === 0) {
+                    list.innerHTML = '<p class="text-muted">Комментариев пока нет. Будьте первым!</p>';
+                    return;
+                }
+
+                comments.forEach(c => {
+                    list.innerHTML += generateCommentHtml(c, 0, 1);
+                });
+            });
+    }
+
+    function generateCommentHtml(comment, currentMargin, level = 1) {
+        const token = localStorage.getItem('access_token');
+        const currentUsername = localStorage.getItem('username');
+        const hasReplies = comment.replies && comment.replies.length > 0;
+
+        let actionButtons = '';
+        if (token) {
+            actionButtons += `<button class="btn btn-sm btn-link p-0 text-decoration-none me-3" onclick="showReplyForm(${comment.id})">Ответить</button>`;
+
+            if (currentUsername === comment.author_name) {
+                actionButtons += `<button class="btn btn-sm btn-link text-secondary p-0 text-decoration-none me-3" onclick="showEditCommentForm(${comment.id})">Изменить</button>`;
+                if (!hasReplies) {
+                    actionButtons += `<button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" onclick="deleteComment(${comment.id})">Удалить</button>`;
+                }
+            }
+        }
+
+        let html = `
+            <div class="card shadow-sm mb-2" style="margin-left: ${currentMargin}px; border-left: ${currentMargin > 0 ? '3px solid #dee2e6' : '1px solid rgba(0,0,0,.125)'};">
+                <div class="card-body py-2">
+                    <p class="mb-1"><strong>${comment.author_name}</strong> <span class="text-muted small ms-2">${new Date(comment.date).toLocaleDateString('ru-RU')}</span></p>
+                    <p class="mb-1" id="comment-text-display-${comment.id}">${comment.text}</p>
+                    <div class="mt-1">${actionButtons}</div>
+                    <div id="reply-form-container-${comment.id}"></div>
+                    <div id="edit-form-container-${comment.id}"></div>
+                </div>
+            </div>
+        `;
+
+        if (hasReplies) {
+            let nextMargin = level >= 3 ? currentMargin : currentMargin + 40;
+            comment.replies.forEach(reply => {
+                html += generateCommentHtml(reply, nextMargin, level + 1);
+            });
+        }
+        return html;
+    }
+
+    // --- 3. ОТВЕТ НА КОММЕНТАРИЙ ---
+    function showReplyForm(commentId) {
+        document.getElementById(`edit-form-container-${commentId}`).innerHTML = '';
+        const container = document.getElementById(`reply-form-container-${commentId}`);
+        container.innerHTML = `
+            <form onsubmit="submitReply(event, ${commentId})" class="mt-2 d-flex">
+                <input type="text" id="reply-text-${commentId}" class="form-control form-control-sm me-2" placeholder="Ваш ответ..." required>
+                <button type="submit" class="btn btn-sm btn-secondary">Отправить</button>
+                <button type="button" class="btn btn-sm btn-light ms-1" onclick="document.getElementById('reply-form-container-${commentId}').innerHTML=''">Отмена</button>
+            </form>
+        `;
+    }
+
+    function submitReply(e, parentId) {
+        e.preventDefault();
+        const text = document.getElementById(`reply-text-${parentId}`).value;
+        sendCommentToApi(text, parentId);
+    }
+
+    // --- 4. ИЗМЕНЕНИЕ КОММЕНТАРИЯ (PATCH) ---
+    function showEditCommentForm(commentId) {
+        document.getElementById(`reply-form-container-${commentId}`).innerHTML = '';
+        const currentText = document.getElementById(`comment-text-display-${commentId}`).innerText;
+        const container = document.getElementById(`edit-form-container-${commentId}`);
+        container.innerHTML = `
+            <form onsubmit="submitEditComment(event, ${commentId})" class="mt-2 d-flex">
+                <input type="text" id="edit-comment-text-${commentId}" class="form-control form-control-sm me-2" required>
+                <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                <button type="button" class="btn btn-sm btn-light ms-1" onclick="document.getElementById('edit-form-container-${commentId}').innerHTML=''">Отмена</button>
+            </form>
+        `;
+        document.getElementById(`edit-comment-text-${commentId}`).value = currentText;
+    }
+
+    function submitEditComment(e, commentId) {
+        e.preventDefault();
+        const newText = document.getElementById(`edit-comment-text-${commentId}`).value;
+        const token = localStorage.getItem('access_token');
+
+        fetch(`/api/comments/${commentId}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ text: newText })
+        })
+        .then(res => {
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Ошибка при изменении комментария");
+            }
+        });
+    }
+
+    // --- 5. УДАЛЕНИЕ КОММЕНТАРИЯ (DELETE) ---
+    function deleteComment(commentId) {
+        if (!confirm('Точно удалить этот комментарий?')) return;
+        const token = localStorage.getItem('access_token');
+
+        fetch(`/api/comments/${commentId}/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Невозможно удалить комментарий (возможно, на него уже ответили).");
+            }
+        });
+    }
+
+    // --- 6. СОЗДАНИЕ КОММЕНТАРИЯ ---
+    document.getElementById('comment-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const text = document.getElementById('comment-text').value;
+        sendCommentToApi(text, null);
+    });
+
+    function sendCommentToApi(text, parentId) {
+        const token = localStorage.getItem('access_token');
+        const payload = { text: text };
+        if (parentId) payload.parent = parentId;
+
+        fetch(`/api/photos/${photoId}/comments/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('comment-text').value = '';
+                loadComments();
+            } else {
+                alert("Ошибка при отправке комментария");
+            }
+        });
+    }
+</script>
+{% endblock %}

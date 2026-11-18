@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
     container_name: snp_postgres
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=photocontest_db
       - POSTGRES_USER=snp_user
@@ -13,5 +12,66 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:alpine
+    container_name: snp_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: snp_web
+    restart: unless-stopped
+    
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+    
+    expose:
+      - "8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - static_volume:/app/staticfiles
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: .
+    container_name: snp_celery
+    restart: unless-stopped
+    command: celery -A config worker -l INFO
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: snp_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80" 
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - ./uploads:/app/uploads:ro
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
+  static_volume:

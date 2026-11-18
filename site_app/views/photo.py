@@ -15,6 +15,8 @@ from django.db.models import Q # Q-объекты для гибких услов
 from django.contrib.auth.mixins import LoginRequiredMixin #Миксин для проверки что пользователь авторизован
 
 from django.contrib.auth.decorators import login_required #Декоратор чтобы функиця проверяла что пользователь авторизован
+
+from PIL import Image
 # Create your views here.
 
 
@@ -105,13 +107,27 @@ class PhotoUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def form_valid(self, form):
 
+
+        # #Блок проверки на валидность фотографии(в целом бессмысленно, так как уже вызывается form.is_valid под капотом и даже не переходит к form_valid)
+        photo = form.cleaned_data.get('photo')
+        if photo:
+            try:
+                img = Image.open(photo)
+                img.verify()
+            except Exception:
+                form.add_error('photo', 'Загруженный файл не является допустимым изображением.')
+                return self.form_invalid(form)
+
+
+
         if 'photo' in form.changed_data:
             old_photo = Photo.objects.get(pk=self.object.pk)
             form.instance.photo = form.cleaned_data['photo']
             
             #Кладем в поле photo из всего объекта old_photo(где лежат и имя, описание, короче весь экземпляр модели) только колонку photo(только сам файл) 
             form.instance.archive_photo = old_photo.photo
-        form.instance.status = 'MOD'
+
+        form.instance.return_to_moderation()
 
         return super().form_valid(form)
     
