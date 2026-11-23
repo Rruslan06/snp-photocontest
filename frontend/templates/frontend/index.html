@@ -1,0 +1,171 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Галерея фотографий (Асинхронная)</h1>
+
+<form id="search-form" class="mb-4">
+    <div class="input-group shadow-sm">
+        <input type="text" id="search-input" class="form-control" placeholder="Поиск по автору/названию/описанию...">
+        <button class="btn btn-primary" type="submit">Искать</button>
+    </div>
+</form>
+
+<div class="mb-4 bg-light p-3 rounded border">
+    <strong class="me-2 d-block mb-2">Сортировка:</strong>
+    <div class="d-flex flex-wrap gap-2">
+    <button class="btn btn-sm btn-primary sort-btn" data-field="date" data-dir="desc">Сначала новые</button>
+    <button class="btn btn-sm btn-outline-primary sort-btn" data-field="date" data-dir="asc">Сначала старые</button>
+    <button class="btn btn-sm btn-outline-primary sort-btn" data-field="likes_count" data-dir="desc">Больше лайков</button>
+    <button class="btn btn-sm btn-outline-primary sort-btn" data-field="likes_count" data-dir="asc">Меньше лайков</button>
+    <button class="btn btn-sm btn-outline-primary sort-btn" data-field="comment_count" data-dir="desc">Больше комментов</button>
+    <button class="btn btn-sm btn-outline-primary sort-btn" data-field="comment_count" data-dir="asc">Меньше комментов</button>
+    </div>
+</div>
+
+<div id="gallery-container" class="row row-cols-1 row-cols-md-4 g-4 mb-4">
+    <div class="col-12 text-center text-muted">Загрузка фотографий...</div>
+</div>
+
+<nav>
+    <ul id="pagination-container" class="pagination justify-content-center"></ul>
+</nav>
+
+<script>
+    let currentPage = 1;
+    let currentSearch = '';
+    let currentSortField = 'date';
+    let currentSortDir = 'desc';
+
+    document.addEventListener('DOMContentLoaded', () => { loadPhotos(); });
+
+    function loadPhotos() {
+        const url = `/api/photos/?page=${currentPage}&search_query=${currentSearch}&sort_field=${currentSortField}&sort_direction=${currentSortDir}`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                renderGallery(data.results);
+                renderPagination(data.pagination);
+            });
+    }
+
+    function renderGallery(photos) {
+        const container = document.getElementById('gallery-container');
+        container.innerHTML = ''; 
+
+        if (photos.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center">Фотографий не найдено.</div>';
+            return;
+        }
+
+
+        photos.forEach(photo => {
+            const card = `
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <a href="/photo/${photo.id}/" class="position-relative d-block photo-hover-wrap">
+
+                        <img src="${photo.photo}" class="card-img-top" style="height: 300px; object-fit: cover;">
+
+                        <div class="photo-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 text-white p-3 d-flex align-items-center justify-content-center text-center" style="opacity: 0; transition: opacity 0.3s; overflow-y: auto;">
+                            <span class="small">${photo.description ? photo.description : 'Нет описания'}</span>
+                        </div>
+
+                    </a>
+
+                    <div class="card-body">
+
+                        <h6 class="card-title text-truncate">${photo.name}</h6>
+
+                        <p class="card-text text-muted small mb-1">Автор: ${photo.author_name}</p>
+                        
+
+                        <div class="d-flex justify-content-between align-items-center text-muted small mt-2">
+
+                            <button class="btn btn-sm btn-outline-danger border-0 p-1" onclick="toggleVote(${photo.id})" title="Голосовать">
+
+                                ❤️ <span id="like-count-${photo.id}">${photo.likes_count}</span>
+                            </button>
+                            
+                            <span>💬 ${photo.comment_count}</span>
+                            <span>📅 ${new Date(photo.date).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            container.innerHTML += card;
+        });
+    }
+
+    function renderPagination(pagination) {
+        const container = document.getElementById('pagination-container');
+        container.innerHTML = '';
+        if (pagination.total_pages <= 1) return;
+
+        if (pagination.prev_page) {
+            container.innerHTML += `<li class="page-item"><button class="page-link" onclick="changePage(${pagination.prev_page})">Назад</button></li>`;
+        }
+        container.innerHTML += `<li class="page-item active"><span class="page-link">Стр ${pagination.current_page} из ${pagination.total_pages}</span></li>`;
+        if (pagination.next_page) {
+            container.innerHTML += `<li class="page-item"><button class="page-link" onclick="changePage(${pagination.next_page})">Вперед</button></li>`;
+        }
+    }
+
+    function changePage(page) { currentPage = page; loadPhotos(); }
+
+    document.getElementById('search-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        currentSearch = document.getElementById('search-input').value;
+        currentPage = 1; 
+        loadPhotos();
+    });
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.sort-btn').forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            currentSortField = this.dataset.field;
+            currentSortDir = this.dataset.dir;
+            currentPage = 1;
+            loadPhotos();
+        });
+    });
+
+
+    function toggleVote(photoId) {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert("Пожалуйста, авторизуйтесь, чтобы голосовать.");
+            window.location.href = '/login/';
+            return;
+        }
+
+
+        fetch(`/api/photos/${photoId}/vote/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Ошибка голосования');
+            return res.json();
+        })
+        .then(data => {
+
+            const countSpan = document.getElementById(`like-count-${photoId}`);
+            if (countSpan) {
+                countSpan.innerText = data.likes_count;
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+</script>
+
+<style>
+    .photo-hover-wrap:hover .photo-overlay { opacity: 1 !important; }
+</style>
+{% endblock %}

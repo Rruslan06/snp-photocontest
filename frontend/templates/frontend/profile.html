@@ -1,0 +1,260 @@
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Мой профиль (Закрытая зона)</h2>
+
+<div class="row">
+    
+    <div class="col-md-3 mb-4">
+
+        
+        <a href="/upload/" class="btn btn-success w-100 mb-3">+ Добавить фото</a>
+        
+       
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Фильтр</h5>
+                <hr>
+                <div class="list-group list-group-flush" id="status-filters">
+                    <button class="list-group-item list-group-item-action active" data-status="">Все фото</button>
+                    <button class="list-group-item list-group-item-action" data-status="MOD">На модерации</button>
+                    <button class="list-group-item list-group-item-action" data-status="APR">Одобренные</button>
+                    <button class="list-group-item list-group-item-action" data-status="REG">Отклоненные</button>
+                    <button class="list-group-item list-group-item-action" data-status="DEL">На удалении</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="card-title">API токен (JWT)</h6>
+                <button class="btn btn-outline-warning btn-sm w-100" onclick="regenerateApiToken()">Сгенерировать заново</button>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="col-md-9">
+        <div id="my-gallery-container" class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col-12 text-center text-muted">Загрузка ваших фотографий...</div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="editPhotoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Изменить фотографию</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-photo-form">
+            <input type="hidden" id="edit-photo-id">
+            
+            <div class="mb-3">
+                <label class="form-label">Название</label>
+                <input type="text" id="edit-name" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Описание</label>
+                <textarea id="edit-desc" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Новая фотография (необязательно)</label>
+                <input type="file" id="edit-file" class="form-control" accept="image/*,.heic,.heif">
+                <div class="form-text">Оставьте пустым, если не хотите менять картинку.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Сохранить изменения</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+    let currentStatus = '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('access_token');
+        if (!token) { window.location.href = '/login/'; return; }
+        loadMyPhotos();
+    });
+
+    function loadMyPhotos() {
+        const token = localStorage.getItem('access_token');
+        fetch(`/api/profile/photos/?status_filter=${currentStatus}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => {
+            if (res.status === 401) {
+                globalLogout();
+                return;
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data) renderMyGallery(data.results);
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    function renderMyGallery(photos) {
+        const container = document.getElementById('my-gallery-container');
+        container.innerHTML = '';
+        if (!photos || photos.length === 0) {
+            container.innerHTML = '<div class="col-12">Фотографий не найдено.</div>';
+            return;
+        }
+
+        photos.forEach(photo => {
+            let badgeHtml = '';
+            if (photo.status === 'APR') badgeHtml = '<span class="badge bg-success mb-2">Одобрено</span>';
+            else if (photo.status === 'MOD') badgeHtml = '<span class="badge bg-warning text-dark mb-2">На модерации</span>';
+            else if (photo.status === 'REG') badgeHtml = '<span class="badge bg-danger mb-2">Отклонено</span>';
+            else if (photo.status === 'DEL') badgeHtml = '<span class="badge bg-secondary mb-2">На удалении</span>';
+
+            let actionButtons = '';
+            if (photo.status === 'DEL') {
+                actionButtons = `<button class="btn btn-sm btn-info w-100" onclick="restorePhoto(${photo.id})">Восстановить</button>`;
+            } else {
+                actionButtons = `
+                    <div class="btn-group w-100">
+                        <button class="btn btn-sm btn-primary" onclick="editPhoto(${photo.id})">Изменить</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletePhoto(${photo.id})">Удалить</button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML += `
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <img src="${photo.photo}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">${photo.name}</h6>
+                        ${badgeHtml}
+                        <p class="card-text text-muted small mb-3">${new Date(photo.date).toLocaleDateString('ru-RU')}</p>
+                        ${actionButtons}
+                    </div>
+                </div>
+            </div>`;
+        });
+    }
+
+
+    document.getElementById('status-filters').addEventListener('click', function(e) {
+        if (e.target.tagName === 'BUTTON') {
+            document.querySelectorAll('#status-filters button').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentStatus = e.target.dataset.status;
+            loadMyPhotos();
+        }
+    });
+
+
+
+    function regenerateApiToken() {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+            alert('Refresh-токен не найден. Пожалуйста, выйдите и войдите заново.');
+            return;
+        }
+
+        fetch('/api/token/refresh/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: refreshToken })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Не удалось обновить токен');
+            return res.json();
+        })
+        .then(data => {
+            localStorage.setItem('access_token', data.access);
+            if (data.refresh) {
+                localStorage.setItem('refresh_token', data.refresh);
+            }
+            alert('Новый API токен успешно сгенерирован!');
+        })
+        .catch(() => {
+            alert('Срок действия сессии истёк, войдите заново.');
+            globalLogout();
+        });
+    }
+
+
+    function deletePhoto(id) {
+        if (!confirm('Отправить фото на удаление?')) return;
+        fetch(`/api/photos/${id}/`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        }).then(res => {
+            if(res.ok) { alert("Фото отправлено на удаление"); loadMyPhotos(); }
+        });
+    }
+
+    function restorePhoto(id) {
+        fetch(`/api/photos/${id}/restore/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        }).then(res => {
+            if(res.ok) { alert("Удаление отменено"); loadMyPhotos(); }
+        });
+    }
+
+    function editPhoto(id) {
+        fetch(`/api/photos/${id}/`)
+            .then(res => res.json())
+            .then(photo => {
+                document.getElementById('edit-photo-id').value = photo.id;
+                document.getElementById('edit-name').value = photo.name;
+                document.getElementById('edit-desc').value = photo.description || '';
+                
+                const editModal = new bootstrap.Modal(document.getElementById('editPhotoModal'));
+                editModal.show();
+            });
+    }
+
+    document.getElementById('edit-photo-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('edit-photo-id').value;
+        const token = localStorage.getItem('access_token');
+        const formData = new FormData();
+
+        const name = document.getElementById('edit-name').value;
+        const desc = document.getElementById('edit-desc').value;
+        const file = document.getElementById('edit-file').files[0];
+
+        if(name) formData.append('name', name);
+        if(desc) formData.append('description', desc);
+        if(file) formData.append('photo', file); 
+
+        
+        fetch(`/api/photos/${id}/`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        })
+        .then(res => {
+            if(res.ok) {
+                const modalElement = document.getElementById('editPhotoModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                modalInstance.hide();
+                
+                alert("Изменения сохранены! Фото отправлено на модерацию.");
+                loadMyPhotos();
+            } else {
+                alert('Ошибка при обновлении фотографии.');
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    });
+</script>
+{% endblock %}

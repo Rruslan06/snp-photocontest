@@ -20,6 +20,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+# ИМПОРТИРУЕМ ВЬЮХИ ДЛЯ ТОКЕНОВ
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 urlpatterns = [
     #Доступ к админ-панели
     path('admin/', admin.site.urls),
@@ -28,13 +31,20 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')), 
 
     #http:127.0.0.1:8000/
-    path('', include('site_app.urls')),
+    # path('', include('site_app.urls')), #Просто шаблоны
+
+    #http:127.0.0.1:8000/app/
+    path('', include('frontend.urls')), #JS
 
     #Путь по идее который генерирует сам файл схемы(JSON)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
 
     #Интерфейс Swagger
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+
+    #JWT
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 
     path('api/', include('api.urls')), 

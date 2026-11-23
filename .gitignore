@@ -7,3 +7,4 @@ venv/
 .vscode/
 .python-version
 uploads/
+staticfiles/

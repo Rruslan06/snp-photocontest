@@ -20,6 +20,13 @@ django-fsm = ">=3.0.1,<4.0.0"
 djangorestframework = ">=3.17.1,<4.0.0"
 drf-spectacular = ">=0.30.0,<0.31.0"
 django-service-objects = { git = "https://github.com/dvkurbatov/django-service-objects", branch = "master" }
+djangorestframework-simplejwt = "^5.5.1"
+celery = "^5.6.3"
+redis = "^8.1.0"
+pillow-heif = "^1.8.1"
+channels = "^4.3.2"
+daphne = "^4.2.3"
+channels-redis = "^4.3.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
