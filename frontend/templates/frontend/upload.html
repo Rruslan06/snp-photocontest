@@ -24,7 +24,7 @@
 
                     <div class="mb-4">
                         <label class="form-label">Файл фотографии</label>
-                        <!-- Принимаем картинки и HEIC с айфонов -->
+
                         <input type="file" id="upload-file" class="form-control" accept="image/*,.heic,.heif" required>
                     </div>
 
@@ -37,7 +37,7 @@
 </div>
 
 <script>
-    // Защита страницы: пускаем только авторизованных
+
     document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -45,18 +45,18 @@
         }
     });
 
-    // Обработка отправки формы
+
     document.getElementById('upload-photo-form').addEventListener('submit', function(e) {
-        e.preventDefault(); // Останавливаем перезагрузку страницы
+        e.preventDefault(); 
         const token = localStorage.getItem('access_token');
         
-        // Собираем данные формы и файл
+      
         const formData = new FormData();
         formData.append('name', document.getElementById('upload-name').value);
         formData.append('description', document.getElementById('upload-desc').value);
         formData.append('photo', document.getElementById('upload-file').files[0]);
 
-        // Отправляем в наше API создания фото
+   
         fetch('/api/photos/create/', {
             method: 'POST',
             headers: {

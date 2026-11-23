@@ -12,12 +12,14 @@
 
 <div class="mb-4 bg-light p-3 rounded border">
     <strong class="me-2 d-block mb-2">Сортировка:</strong>
+    <div class="d-flex flex-wrap gap-2">
     <button class="btn btn-sm btn-primary sort-btn" data-field="date" data-dir="desc">Сначала новые</button>
     <button class="btn btn-sm btn-outline-primary sort-btn" data-field="date" data-dir="asc">Сначала старые</button>
     <button class="btn btn-sm btn-outline-primary sort-btn" data-field="likes_count" data-dir="desc">Больше лайков</button>
     <button class="btn btn-sm btn-outline-primary sort-btn" data-field="likes_count" data-dir="asc">Меньше лайков</button>
     <button class="btn btn-sm btn-outline-primary sort-btn" data-field="comment_count" data-dir="desc">Больше комментов</button>
     <button class="btn btn-sm btn-outline-primary sort-btn" data-field="comment_count" data-dir="asc">Меньше комментов</button>
+    </div>
 </div>
 
 <div id="gallery-container" class="row row-cols-1 row-cols-md-4 g-4 mb-4">

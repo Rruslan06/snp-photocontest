@@ -24,30 +24,30 @@
 
 <script>
     document.getElementById('login-form').addEventListener('submit', function(e) {
-        e.preventDefault(); // Останавливаем перезагрузку
+        e.preventDefault(); 
         
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        // Отправляем логин и пароль 
+        
         fetch('/api/token/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username: username, password: password }) // Превращаем в JSON
+            body: JSON.stringify({ username: username, password: password }) 
         })
         .then(response => {
             if (!response.ok) throw new Error('Ошибка авторизации');
             return response.json();
         })
         .then(data => {
-            // Сохраняем токен
+            
             localStorage.setItem('access_token', data.access);
 
             localStorage.setItem('refresh_token', data.refresh);
 
-            // НОВАЯ СТРОЧКА: Сохраняем имя юзера!
+            
             localStorage.setItem('username', username); 
             
             window.location.href = '/profile/';

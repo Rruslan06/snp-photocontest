@@ -4,13 +4,13 @@
 <h2 class="mb-4">Мой профиль (Закрытая зона)</h2>
 
 <div class="row">
-    <!-- ЛЕВАЯ КОЛОНКА -->
+    
     <div class="col-md-3 mb-4">
 
-        <!-- Кнопка загрузки -->
+        
         <a href="/upload/" class="btn btn-success w-100 mb-3">+ Добавить фото</a>
         
-        <!-- Карточка фильтров -->
+       
         <div class="card shadow-sm">
             <div class="card-body">
                 <h5 class="card-title">Фильтр</h5>
@@ -34,7 +34,7 @@
 
     </div>
 
-    <!-- ПРАВАЯ КОЛОНКА: Фотографии -->
+
     <div class="col-md-9">
         <div id="my-gallery-container" class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col-12 text-center text-muted">Загрузка ваших фотографий...</div>
@@ -43,7 +43,7 @@
 </div>
 
 
-<!-- Модальное окно редактирования фотографии -->
+
 <div class="modal fade" id="editPhotoModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -145,7 +145,7 @@
         });
     }
 
-    // Фильтры статусов
+
     document.getElementById('status-filters').addEventListener('click', function(e) {
         if (e.target.tagName === 'BUTTON') {
             document.querySelectorAll('#status-filters button').forEach(b => b.classList.remove('active'));
@@ -186,7 +186,7 @@
         });
     }
 
-    // --- ФУНКЦИИ УДАЛЕНИЯ, ВОССТАНОВЛЕНИЯ И ИЗМЕНЕНИЯ ---
+
     function deletePhoto(id) {
         if (!confirm('Отправить фото на удаление?')) return;
         fetch(`/api/photos/${id}/`, {

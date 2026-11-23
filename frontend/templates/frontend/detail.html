@@ -5,18 +5,18 @@
     <a href="/" class="btn btn-outline-secondary btn-sm">&larr; Вернуться в галерею</a>
 </div>
 
-<!-- БЛОК ДЛЯ ФОТОГРАФИИ -->
+
 <div class="row" id="photo-detail-container">
     <div class="col-12 text-center text-muted" id="loading-msg">Загрузка фотографии...</div>
 </div>
 
-<!-- БЛОК КОММЕНТАРИЕВ -->
+
 <div class="row mt-5">
     <div class="col-md-8">
         <h4>Комментарии</h4>
         <hr>
-        
-        <!-- Форма отправки (Скрыта для гостей) -->
+      
+
         <div id="comment-form-container" style="display: none;" class="mb-4">
             <form id="comment-form">
                 <div class="input-group">
@@ -26,7 +26,7 @@
             </form>
         </div>
 
-        <!-- Список комментариев -->
+     
         <div id="comments-list">
             <p class="text-muted">Загрузка комментариев...</p>
         </div>
@@ -45,7 +45,7 @@
         }
     });
 
-    // --- 1. ЗАГРУЗКА ФОТОГРАФИИ И КНОПКИ ЛАЙКА ---
+   
     function loadSinglePhoto() {
         const token = localStorage.getItem('access_token');
         const headers = {};
@@ -105,7 +105,7 @@
             });
     }
 
-    // --- ФУНКЦИЯ ГОЛОСОВАНИЯ (ЛАЙКА) ---
+   
     function toggleDetailVote(id) {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -143,7 +143,7 @@
         .catch(error => console.error('Ошибка:', error));
     }
 
-    // --- 2. ЗАГРУЗКА КОММЕНТАРИЕВ ---
+   
     function loadComments() {
         fetch(`/api/photos/${photoId}/comments/`)
             .then(res => res.json())
@@ -201,7 +201,7 @@
         return html;
     }
 
-    // --- 3. ОТВЕТ НА КОММЕНТАРИЙ ---
+    
     function showReplyForm(commentId) {
         document.getElementById(`edit-form-container-${commentId}`).innerHTML = '';
         const container = document.getElementById(`reply-form-container-${commentId}`);
@@ -220,7 +220,7 @@
         sendCommentToApi(text, parentId);
     }
 
-    // --- 4. ИЗМЕНЕНИЕ КОММЕНТАРИЯ (PATCH) ---
+    
     function showEditCommentForm(commentId) {
         document.getElementById(`reply-form-container-${commentId}`).innerHTML = '';
         const currentText = document.getElementById(`comment-text-display-${commentId}`).innerText;
@@ -257,7 +257,7 @@
         });
     }
 
-    // --- 5. УДАЛЕНИЕ КОММЕНТАРИЯ (DELETE) ---
+    
     function deleteComment(commentId) {
         if (!confirm('Точно удалить этот комментарий?')) return;
         const token = localStorage.getItem('access_token');
@@ -277,7 +277,7 @@
         });
     }
 
-    // --- 6. СОЗДАНИЕ КОММЕНТАРИЯ ---
+    
     document.getElementById('comment-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const text = document.getElementById('comment-text').value;
