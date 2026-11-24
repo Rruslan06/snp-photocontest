@@ -86,22 +86,6 @@ def restore_photos(modeladmin, request, queryset):
 
 
 
-@admin.action(description='ОТПРАВИТЬ МАССОВОЕ УВЕДОМЛЕНИЕ ВСЕМ')
-def send_mass_notification(modeladmin, request, queryset):
-    """Рассылает системное уведомление через WebSocket всем пользователям"""
-    channel_layer = get_channel_layer()
-    users = User.objects.all() 
-    
-    for user in users:
-        async_to_sync(channel_layer.group_send)(
-            f"user_{user.id}", 
-            {"type": "send_notification", "message": "СИСТЕМНОЕ СООБЩЕНИЕ: Модератор только что проверил новые фотографии!"}
-        )
-    
-    modeladmin.message_user(request, 'Массовое уведомление отправлено всем пользователям!', messages.SUCCESS)
-
-
-
 
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
@@ -127,4 +111,4 @@ class PhotoAdmin(admin.ModelAdmin):
     readonly_fields = ('date','archive_photo')
     
     # Регистрируем наши кнопки в админке!
-    actions = [approve_photos, reject_photos, restore_photos, send_mass_notification]
+    actions = [approve_photos, reject_photos, restore_photos]
