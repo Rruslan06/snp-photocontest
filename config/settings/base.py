@@ -164,8 +164,7 @@ SITE_ID = 1
 
 # Куда перенаправлять юзера после успешного входа и выхода (на главную страницу)
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
+LOGIN_REDIRECT_URL = '/social-callback/'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', 

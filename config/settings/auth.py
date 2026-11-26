@@ -18,3 +18,6 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['login:email', 'login:info', 'login:avatar'],
     }
 }
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+

@@ -1,0 +1,25 @@
+<!--  Python не имеет доступа к localStorage в браузере пользователя и записать JWT-токен в localStorage может только
+   JavaScript -->
+{% extends 'frontend/base.html' %}
+
+{% block content %}
+
+<div class="text-center mt-5">
+    <div class="spinner-border text-warning" role="status"></div>
+
+    <p class="mt-2">Завершаем вход через Яндекс...</p>
+
+</div>
+
+<script>
+
+    localStorage.setItem('access_token', "{{ access_token|escapejs }}");
+    localStorage.setItem('refresh_token', "{{ refresh_token|escapejs }}");
+    localStorage.setItem('username', "{{ username|escapejs }}");
+    localStorage.setItem('display_name', "{{ display_name|escapejs }}");
+    localStorage.setItem('user_email', "{{ email|escapejs }}");
+    localStorage.setItem('user_avatar', "{{ avatar_url|escapejs }}");
+    window.location.href = '/profile/';
+
+</script>
+{% endblock %}

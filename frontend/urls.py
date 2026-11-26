@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import FrontendIndexView, FrontendDetailView, FrontendLoginView, FrontendProfileView, FrontendUploadView, FrontendRegisterView
+from .views import FrontendIndexView, FrontendDetailView, FrontendLoginView, FrontendProfileView, FrontendUploadView, FrontendRegisterView, FrontendSocialCallbackView
 
 app_name = 'frontend'
 
@@ -14,5 +14,7 @@ urlpatterns = [
 
     path('upload/', FrontendUploadView.as_view(), name='upload'),
 
-    path('register/', FrontendRegisterView.as_view(), name='register')
+    path('register/', FrontendRegisterView.as_view(), name='register'), 
+
+    path('social-callback/', FrontendSocialCallbackView.as_view(), name='social_callback'),
 ]
